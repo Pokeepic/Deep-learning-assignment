@@ -79,20 +79,13 @@ st.set_page_config(
 st.title("Object Detection And Tracking using YOLOv8")
 
 # Sidebar
-st.sidebar.header("ML Model Config")
-
-# Model Options
-model_type = st.sidebar.radio(
-    "Select Task", ['Detection', 'Segmentation'])
+st.sidebar.header("YOLOv8 Detection Config")
 
 confidence = float(st.sidebar.slider(
     "Select Model Confidence", 25, 100, 40)) / 100
 
-# Selecting Detection Or Segmentation
-if model_type == 'Detection':
-    model_path = Path(settings.DETECTION_MODEL)
-elif model_type == 'Segmentation':
-    model_path = Path(settings.SEGMENTATION_MODEL)
+# Load Detection Model
+model_path = Path(settings.DETECTION_MODEL)
 
 # Load Pre-trained ML Model
 try:

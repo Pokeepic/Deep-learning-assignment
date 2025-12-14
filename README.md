@@ -1,6 +1,6 @@
-# <span style="color:deepskyblue"> Real-time Object Detection and Tracking with YOLOv8 & Streamlit </span>
+# <span style="color:deepskyblue"> YOLOv8 Object Detection with Class Filtering and Export </span>
 
-This repository is an extensive open-source project showcasing the seamless integration of **object detection and tracking** using **YOLOv8** (object detection algorithm), along with **Streamlit** (a popular Python web application framework for creating interactive web apps). The project offers a user-friendly and customizable interface designed to detect and track objects in real-time video streams from sources such as RTSP, UDP, and YouTube URLs, as well as static videos and images.
+This project implements an object detection system using YOLOv8. The system supports image and video inputs, class-based filtering, confidence thresholding, and CSV export of detected objects.
 
 
 ## <span style="color:deepskyblue">Explore Implementation Details on Medium (3 parts blog series) </span>
@@ -36,10 +36,6 @@ This app is up and running on Streamlit cloud server!!! You can check the demo o
 
 <img src="https://github.com/CodingMantras/yolov8-streamlit-detection-tracking/blob/master/assets/pic3.png" >
 
-### Segmentation task on image
-
-<img src="https://github.com/CodingMantras/yolov8-streamlit-detection-tracking/blob/master/assets/segmentation.png" >
-
 ## Requirements
 
 Python 3.6+
@@ -62,11 +58,12 @@ pip install ultralytics streamlit pytube numpy pandas opencv-python yt_dlp
 - Run the app with the following command: `streamlit run app.py`
 - The app should open in a new browser window.
 
-### ML Model Config
+### YOLOv8 Detection Config
 
-- Select task (Detection, Segmentation)
 - Select model confidence
 - Use the slider to adjust the confidence threshold (25-100) for the model.
+- Enable class filter and select classes to display
+- Set minimum confidence for export
 
 One the model config is done, select a source.
 
@@ -106,7 +103,7 @@ VIDEOS_DICT = {
 # Your videos will start appearing inside streamlit webapp 'Choose a video'.
 ```
 
-- Click on `Detect Video Objects` button and the selected task (detection/segmentation) will start on the selected video.
+- Click on `Detect Video Objects` button and object detection will start on the selected video with class filtering.
 
 ### Detection on RTSP
 
@@ -117,7 +114,7 @@ VIDEOS_DICT = {
 
 - Select the source as YouTube
 - Copy paste the url inside the text box.
-- The detection/segmentation task will start on the YouTube video url
+- The object detection task will start on the YouTube video url
 
 <https://user-images.githubusercontent.com/104087274/226178296-684ad72a-fe5f-4589-b668-95c835cd8d8a.mov>
 
