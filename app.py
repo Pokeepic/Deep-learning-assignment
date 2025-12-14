@@ -11,7 +11,6 @@ import helper
 import pandas as pd
 import numpy as np
 import cv2
-import random
 from datetime import datetime
 
 
@@ -22,11 +21,6 @@ CLASS_COLORS = {
     "chair": (255, 0, 255),   # purple
 }
 DEFAULT_COLOR = (255, 255, 255)  # white fallback in BGR
-
-
-def color_for_class(name):
-    random.seed(hash(name) % 2**32)
-    return tuple(random.randint(50, 255) for _ in range(3))
 
 
 def draw_filtered_boxes(img_rgb, result, selected_classes, min_conf=0.0):
@@ -56,7 +50,7 @@ def draw_filtered_boxes(img_rgb, result, selected_classes, min_conf=0.0):
         x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
 
         # draw (OpenCV uses BGR, so convert quickly)
-        color = color_for_class(cls_name)
+        color = CLASS_COLORS.get(cls_name, DEFAULT_COLOR)
         out_bgr = cv2.cvtColor(out, cv2.COLOR_RGB2BGR)
         cv2.rectangle(out_bgr, (x1, y1), (x2, y2), color, 2)
         cv2.putText(
@@ -238,7 +232,15 @@ if source_radio == settings.IMAGE:
 
 
 elif source_radio == settings.VIDEO:
-    helper.play_stored_video(confidence, model)
+    # create video class filter using model.names
+    all_classes = sorted([str(v).lower() for v in model.names.values()])
+    video_selected = st.sidebar.multiselect(
+        "Show only these classes (Video)",
+        options=all_classes,
+        default=all_classes
+    )
+
+    helper.play_stored_video(confidence, model, selected_classes=video_selected)
 else:
     st.error("Please select a valid source type!")
 
