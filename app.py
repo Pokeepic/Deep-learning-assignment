@@ -11,7 +11,66 @@ import helper
 import pandas as pd
 import numpy as np
 import cv2
+import random
 from datetime import datetime
+
+
+CLASS_COLORS = {
+    "person": (255, 0, 0),    # blue in BGR
+    "laptop": (0, 255, 0),    # green
+    "bottle": (0, 255, 255),  # yellow
+    "chair": (255, 0, 255),   # purple
+}
+DEFAULT_COLOR = (255, 255, 255)  # white fallback in BGR
+
+
+def color_for_class(name):
+    random.seed(hash(name) % 2**32)
+    return tuple(random.randint(50, 255) for _ in range(3))
+
+
+def draw_filtered_boxes(img_rgb, result, selected_classes, min_conf=0.0):
+    """
+    img_rgb: numpy RGB image (H,W,3)
+    result: YOLO result (res[0])
+    selected_classes: list of class names to keep (lowercase)
+    min_conf: confidence threshold to display
+    """
+    out = img_rgb.copy()
+    names = result.names
+
+    if result.boxes is None or len(result.boxes) == 0:
+        return out
+
+    for b in result.boxes:
+        cls_id = int(b.cls.item())
+        cls_name = str(names.get(cls_id, cls_id)).lower()
+        conf = float(b.conf.item())
+
+        if selected_classes and cls_name not in selected_classes:
+            continue
+        if conf < min_conf:
+            continue
+
+        x1, y1, x2, y2 = b.xyxy[0].tolist()
+        x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
+
+        # draw (OpenCV uses BGR, so convert quickly)
+        color = color_for_class(cls_name)
+        out_bgr = cv2.cvtColor(out, cv2.COLOR_RGB2BGR)
+        cv2.rectangle(out_bgr, (x1, y1), (x2, y2), color, 2)
+        cv2.putText(
+            out_bgr,
+            f"{cls_name} {conf:.2f}",
+            (x1, max(20, y1 - 8)),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.6,
+            color,
+            2
+        )
+        out = cv2.cvtColor(out_bgr, cv2.COLOR_BGR2RGB)
+
+    return out
 
 
 # Setting page layout
@@ -68,7 +127,7 @@ if source_radio == settings.IMAGE:
     # Clear session state if new image uploaded
     if source_img is not None:
         if 'uploaded_file' not in st.session_state or st.session_state['uploaded_file'] != source_img.name:
-            for key in ['detections_df', 'selected_classes', 'filtered_df', 'export_df', 'plotted_image']:
+            for key in ['detections_df', 'selected_classes', 'filtered_df', 'export_df', 'uploaded_image', 'result']:
                 if key in st.session_state:
                     del st.session_state[key]
             st.session_state['uploaded_file'] = source_img.name
@@ -81,11 +140,11 @@ if source_radio == settings.IMAGE:
                 default_image_path = str(settings.DEFAULT_IMAGE)
                 default_image = PIL.Image.open(default_image_path)
                 st.image(default_image_path, caption="Default Image",
-                         use_column_width=True)
+                         width="stretch")
             else:
                 uploaded_image = PIL.Image.open(source_img)
                 st.image(source_img, caption="Uploaded Image",
-                         use_column_width=True)
+                         width="stretch")
         except Exception as ex:
             st.error("Error occurred while opening the image.")
             st.error(ex)
@@ -96,7 +155,7 @@ if source_radio == settings.IMAGE:
             default_detected_image = PIL.Image.open(
                 default_detected_image_path)
             st.image(default_detected_image_path, caption='Detected Image',
-                     use_column_width=True)
+                     width="stretch")
         else:
             if st.sidebar.button('Detect Objects'):
                 res = model.predict(uploaded_image, conf=confidence)
@@ -120,15 +179,8 @@ if source_radio == settings.IMAGE:
 
                 df_det = pd.DataFrame(detections)
                 st.session_state['detections_df'] = df_det
-
-                plotted_bgr = result.plot()
-                plotted_rgb = cv2.cvtColor(plotted_bgr, cv2.COLOR_BGR2RGB)
-                st.session_state['plotted_image'] = plotted_rgb
-
-            if 'plotted_image' in st.session_state:
-                st.image(st.session_state['plotted_image'], use_container_width=True)
-            else:
-                st.write("Click 'Detect Objects' to start detection.")
+                st.session_state['uploaded_image'] = uploaded_image
+                st.session_state['result'] = result
 
     # Display detections if available
     if 'detections_df' in st.session_state:
@@ -159,10 +211,19 @@ if source_radio == settings.IMAGE:
         st.session_state['filtered_df'] = df_view
         st.session_state['export_df'] = df_export
 
+        img_rgb = np.array(st.session_state['uploaded_image'].convert("RGB"))
+        filtered_img = draw_filtered_boxes(
+            img_rgb,
+            st.session_state['result'],
+            [c.lower() for c in selected_classes] if enable_filter and selected_classes else [],
+            min_conf_export
+        )
+        st.image(filtered_img, caption="Filtered Boxes View", width="stretch")
+
         st.info(f"Total detections: {len(df_det)} | After filter: {len(df_view)} | Export: {len(df_export)}")
 
         st.subheader("📋 Filtered Detections Table")
-        st.dataframe(df_view, use_container_width=True)
+        st.dataframe(df_view, width="stretch")
 
         st.download_button(
             "Download detections CSV",
