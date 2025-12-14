@@ -47,7 +47,7 @@ YOLOv8
 Streamlit
 
 ```bash
-pip install ultralytics streamlit pytube numpy pandas opencv-python
+pip install ultralytics streamlit pytube numpy pandas opencv-python yt_dlp 
 ```
 
 ## Installation
