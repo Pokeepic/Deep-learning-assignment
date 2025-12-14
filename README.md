@@ -17,8 +17,6 @@ The goal of this project is to demonstrate practical usage of deep learning–ba
 - ✅ CSV export of filtered detections
 - ✅ Simple, clean Streamlit UI
 
-> ❌ Segmentation, RTSP, webcam, and YouTube inputs have been intentionally removed to keep the application focused and lightweight.
-
 ---
 
 ## 🖥️ Application Overview
