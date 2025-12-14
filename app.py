@@ -94,6 +94,25 @@ except Exception as ex:
     st.error(f"Unable to load model. Check the specified path: {model_path}")
     st.error(ex)
 
+# ✅ Full class list from YOLO model (COCO)
+ALL_CLASSES = sorted(list(model.names.values()))
+
+# Keep selection stable even when Streamlit reruns
+if "selected_classes" not in st.session_state:
+    st.session_state.selected_classes = ALL_CLASSES  # default = show all
+else:
+    # If something changed, keep only valid classes
+    st.session_state.selected_classes = [
+        c for c in st.session_state.selected_classes if c in ALL_CLASSES
+    ]
+
+selected_classes = st.sidebar.multiselect(
+    "Show only these classes",
+    options=ALL_CLASSES,
+    default=st.session_state.selected_classes,
+    key="selected_classes",
+)
+
 st.sidebar.header("Image/Video Config")
 source_radio = st.sidebar.radio(
     "Select Source", settings.SOURCES_LIST)
@@ -172,21 +191,6 @@ if source_radio == settings.IMAGE:
     # Display detections if available
     if 'detections_df' in st.session_state:
         df_det = st.session_state['detections_df']
-        if len(df_det) > 0:
-            all_classes = sorted(df_det["class"].unique().tolist())
-        else:
-            all_classes = []
-
-        if 'selected_classes' not in st.session_state:
-            st.session_state['selected_classes'] = all_classes
-
-        selected_classes = st.sidebar.multiselect(
-            "Show only these classes",
-            options=all_classes,
-            default=st.session_state['selected_classes']
-        )
-
-        st.session_state['selected_classes'] = selected_classes
 
         if enable_filter and len(df_det) > 0 and len(selected_classes) > 0:
             df_view = df_det[df_det["class"].isin(selected_classes)].copy()
@@ -225,15 +229,7 @@ if source_radio == settings.IMAGE:
 
 
 elif source_radio == settings.VIDEO:
-    # create video class filter using model.names
-    all_classes = sorted([str(v).lower() for v in model.names.values()])
-    video_selected = st.sidebar.multiselect(
-        "Show only these classes (Video)",
-        options=all_classes,
-        default=all_classes
-    )
-
-    helper.play_stored_video(confidence, model, selected_classes=video_selected)
+    helper.play_stored_video(confidence, model, selected_classes=selected_classes)
 else:
     st.error("Please select a valid source type!")
 
