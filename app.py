@@ -8,6 +8,10 @@ import streamlit as st
 # Local Modules
 import settings
 import helper
+import pandas as pd
+import numpy as np
+import cv2
+from datetime import datetime
 
 # Setting page layout
 st.set_page_config(
@@ -108,3 +112,20 @@ elif source_radio == settings.YOUTUBE:
 
 else:
     st.error("Please select a valid source type!")
+
+
+def box_center_xyxy(xyxy):
+    x1, y1, x2, y2 = xyxy
+    cx = (x1 + x2) / 2
+    cy = (y1 + y2) / 2
+    return cx, cy
+
+def inside_roi(cx, cy, roi):
+    rx1, ry1, rx2, ry2 = roi
+    return (rx1 <= cx <= rx2) and (ry1 <= cy <= ry2)
+
+def draw_roi(frame_bgr, roi):
+    rx1, ry1, rx2, ry2 = roi
+    cv2.rectangle(frame_bgr, (rx1, ry1), (rx2, ry2), (0, 0, 255), 2)
+    cv2.putText(frame_bgr, "RESTRICTED ZONE", (rx1, max(ry1-10, 15)),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,255), 2)
