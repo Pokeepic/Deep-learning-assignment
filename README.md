@@ -1,4 +1,4 @@
-# 🎯 YOLOv8 Object Detection with Class Filtering & Export (Streamlit App)
+# YOLOv8 Object Detection with Class Filtering & Export (Streamlit App)
 
 This project implements an **object detection web application using YOLOv8 and Streamlit**.  
 It supports **image and video detection**, **class-based filtering**, **confidence thresholding**, and **CSV export** of detected objects.
@@ -7,7 +7,7 @@ The goal of this project is to demonstrate practical usage of deep learning–ba
 
 ---
 
-## 🔍 Features
+## Features
 
 - ✅ YOLOv8 object detection
 - ✅ Image and video input support
@@ -19,7 +19,7 @@ The goal of this project is to demonstrate practical usage of deep learning–ba
 
 ---
 
-## 🖥️ Application Overview
+## Application Overview
 
 ### Main Interface
 - Upload an **image** or select a **video**
@@ -34,7 +34,7 @@ The goal of this project is to demonstrate practical usage of deep learning–ba
 
 ---
 
-## 🧠 Model Used
+## Model Used
 
 - **YOLOv8 (Ultralytics)**
 - Pre-trained on **COCO dataset**
@@ -42,7 +42,7 @@ The goal of this project is to demonstrate practical usage of deep learning–ba
 
 ---
 
-## 📦 Requirements
+## Requirements
 
 - Python **3.8+**
 - Streamlit
