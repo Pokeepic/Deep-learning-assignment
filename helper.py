@@ -1,9 +1,11 @@
 from ultralytics import YOLO
+from helper import frames_to_gif_bytes
 import streamlit as st
 import cv2
 import yt_dlp
 import settings
-
+import io
+import imageio.v2 as imageio
 
 CLASS_COLORS = {
     "person": (255, 0, 0),    # blue in BGR
@@ -112,48 +114,79 @@ def _display_detected_frames(conf, model, st_frame, image, is_display_tracking=N
         width='stretch'
     )
 
-def play_stored_video(conf, model, selected_classes=None):
+def play_stored_video(conf, model):
+    source_vid = st.sidebar.selectbox("Choose a video...", list(settings.VIDEOS_DICT.keys()))
+    video_path = str(settings.VIDEOS_DICT.get(source_vid))
+
+    st.video(open(video_path, "rb").read())
+
+    # --- GIF settings in sidebar ---
+    st.sidebar.markdown("### 🎞️ Download as GIF")
+    make_gif = st.sidebar.checkbox("Enable GIF export", value=True)
+    gif_fps = st.sidebar.slider("GIF FPS", 2, 15, 8)
+    sample_every = st.sidebar.slider("Sample every N frames", 1, 10, 2)
+    max_gif_frames = st.sidebar.slider("Max GIF frames", 30, 300, 120)
+
+    if st.sidebar.button("Detect Video Objects"):
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            st.error("Could not open video.")
+            return
+
+        frame_i = 0
+        gif_frames_rgb = []  # store RGB frames for GIF
+        frame_placeholder = st.empty()
+
+        while True:
+            ok, frame_bgr = cap.read()
+            if not ok:
+                break
+
+            frame_i += 1
+            if frame_i % sample_every != 0:
+                continue
+
+            # YOLO prediction
+            res = model.predict(frame_bgr, conf=conf, verbose=False)
+            result = res[0]
+
+            plotted_bgr = result.plot()  # BGR image with boxes/labels
+            plotted_rgb = cv2.cvtColor(plotted_bgr, cv2.COLOR_BGR2RGB)
+
+            # show live preview
+            frame_placeholder.image(plotted_rgb, caption="Detected frame", use_container_width=True)
+
+            # collect for gif
+            if make_gif and len(gif_frames_rgb) < max_gif_frames:
+                gif_frames_rgb.append(plotted_rgb)
+
+            # stop when enough frames for gif
+            if make_gif and len(gif_frames_rgb) >= max_gif_frames:
+                break
+
+        cap.release()
+
+        # Create download button
+        if make_gif and len(gif_frames_rgb) > 0:
+            gif_bytes = frames_to_gif_bytes(gif_frames_rgb, fps=gif_fps)
+            st.download_button(
+                "⬇️ Download Detected GIF",
+                data=gif_bytes,
+                file_name="detected_video.gif",
+                mime="image/gif",
+            )
+        else:
+            st.info("GIF export disabled or no frames collected.")
+
+def frames_to_gif_bytes(frames_rgb, fps=8):
     """
-    Plays a stored video file. Tracks and detects objects in real-time using the YOLOv8 object detection model.
-
-    Parameters:
-        conf: Confidence of YOLOv8 model.
-        model: An instance of the `YOLOv8` class containing the YOLOv8 model.
-
-    Returns:
-        None
-
-    Raises:
-        None
+    frames_rgb: list of numpy arrays in RGB format (H,W,3), dtype uint8
+    returns: bytes of GIF
     """
-    source_vid = st.sidebar.selectbox(
-        "Choose a video...", settings.VIDEOS_DICT.keys())
+    gif_buffer = io.BytesIO()
+    duration = 1.0 / max(fps, 1)
 
-    is_display_tracker, tracker = display_tracker_options()
-
-    with open(settings.VIDEOS_DICT.get(source_vid), 'rb') as video_file:
-        video_bytes = video_file.read()
-    if video_bytes:
-        st.video(video_bytes)
-
-    if st.sidebar.button('Detect Video Objects'):
-        try:
-            vid_cap = cv2.VideoCapture(
-                str(settings.VIDEOS_DICT.get(source_vid)))
-            st_frame = st.empty()
-            while (vid_cap.isOpened()):
-                success, image = vid_cap.read()
-                if success:
-                    _display_detected_frames(conf,
-                                             model,
-                                             st_frame,
-                                             image,
-                                             is_display_tracker,
-                                             tracker,
-                                             selected_classes=selected_classes
-                                             )
-                else:
-                    vid_cap.release()
-                    break
-        except Exception as e:
-            st.sidebar.error("Error loading video: " + str(e))
+    # imageio expects list of RGB images
+    imageio.mimsave(gif_buffer, frames_rgb, format="GIF", duration=duration, loop=0)
+    gif_buffer.seek(0)
+    return gif_buffer.getvalue()

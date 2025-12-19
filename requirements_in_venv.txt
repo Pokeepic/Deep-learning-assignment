@@ -5,3 +5,4 @@ numpy
 pandas 
 opencv-python 
 yt_dlp
+imageio
