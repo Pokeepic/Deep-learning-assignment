@@ -1,5 +1,4 @@
 from ultralytics import YOLO
-from helper import frames_to_gif_bytes
 import streamlit as st
 import cv2
 import yt_dlp
