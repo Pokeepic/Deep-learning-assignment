@@ -125,12 +125,10 @@ def play_stored_video(conf, model, selected_classes=None, enable_filter=True, mi
 
     st.video(open(video_path, "rb").read())
 
-    # --- GIF settings in sidebar ---
-    st.sidebar.markdown("### 🎞️ Download as GIF")
-    make_gif = st.sidebar.checkbox("Enable GIF export", value=True)
-    gif_fps = st.sidebar.slider("GIF FPS", 2, 15, 8)
-    sample_every = st.sidebar.slider("Sample every N frames", 1, 10, 2)
-    max_gif_frames = st.sidebar.slider("Max GIF frames", 30, 300, 120)
+    # Fixed GIF parameters (<= 10 seconds)
+    GIF_FPS = 10
+    SAMPLE_EVERY = 6
+    MAX_GIF_FRAMES = 100
 
     if st.sidebar.button("Detect Video Objects"):
         cap = cv2.VideoCapture(video_path)
@@ -148,44 +146,40 @@ def play_stored_video(conf, model, selected_classes=None, enable_filter=True, mi
                 break
 
             frame_i += 1
-            if frame_i % sample_every != 0:
+            if frame_i % SAMPLE_EVERY != 0:
                 continue
 
             # YOLO prediction
             res = model.predict(frame_bgr, conf=conf, verbose=False)
             result = res[0]
 
-            # ✅ draw ONLY selected classes (and only if enable_filter is True)
+            # ✅ apply class filter to the drawn frame
             classes_to_draw = selected_classes if enable_filter else None
             plotted_bgr = draw_filtered_boxes(frame_bgr, result, selected_classes=classes_to_draw, min_conf_export=min_conf_export)
-
-            # (optional) for preview in Streamlit
             plotted_rgb = cv2.cvtColor(plotted_bgr, cv2.COLOR_BGR2RGB)
 
-            # show live preview
-            frame_placeholder.image(plotted_rgb, caption="Detected frame", use_container_width=True)
+            # show live preview (video result)
+            frame_placeholder.image(plotted_rgb, caption="Detected Video", use_container_width=True)
 
-            # collect for gif
-            if make_gif and len(gif_frames_rgb) < max_gif_frames:
+            # collect frames for GIF
+            if len(gif_frames_rgb) < MAX_GIF_FRAMES:
                 gif_frames_rgb.append(plotted_rgb)
-
-            # stop when enough frames for gif
-            if make_gif and len(gif_frames_rgb) >= max_gif_frames:
+            else:
                 break
 
         cap.release()
 
-        # Create download button
-        if make_gif and len(gif_frames_rgb) > 0:
-            gif_bytes = frames_to_gif_bytes(gif_frames_rgb, fps=gif_fps)
+        # ✅ One download button (no sliders)
+        if len(gif_frames_rgb) > 0:
+            gif_bytes = frames_to_gif_bytes(gif_frames_rgb, fps=GIF_FPS)
             st.download_button(
-                "⬇️ Download Detected GIF",
+                "⬇️ Download detected GIF",
                 data=gif_bytes,
                 file_name="detected_video.gif",
                 mime="image/gif",
             )
         else:
-            st.info("GIF export disabled or no frames collected.")
+            st.info("No frames collected for GIF.")
 
 def frames_to_gif_bytes(frames_rgb, fps=8):
     """
