@@ -5,6 +5,8 @@ import yt_dlp
 import settings
 import io
 import imageio.v2 as imageio
+import numpy as np
+import pandas as pd
 
 CLASS_COLORS = {
     "person": (255, 0, 0),    # blue in BGR
@@ -15,7 +17,7 @@ CLASS_COLORS = {
 DEFAULT_COLOR = (255, 255, 255)  # white fallback in BGR
 
 
-def draw_filtered_boxes(frame_bgr, result, selected_classes=None):
+def draw_filtered_boxes(frame_bgr, result, selected_classes=None, min_conf_export=0.0):
     """
     Draw only selected classes on a BGR frame.
     selected_classes: list[str] or None (None = draw all)
@@ -36,6 +38,8 @@ def draw_filtered_boxes(frame_bgr, result, selected_classes=None):
             continue
 
         conf = float(b.conf.item())
+        if conf < min_conf_export:
+            continue
         x1, y1, x2, y2 = map(int, b.xyxy[0].tolist())
 
         color = CLASS_COLORS.get(cls_name, DEFAULT_COLOR)
@@ -76,7 +80,7 @@ def display_tracker_options():
     return is_display_tracker, None
 
 
-def _display_detected_frames(conf, model, st_frame, image, is_display_tracking=None, tracker=None, selected_classes=None):
+def _display_detected_frames(conf, model, st_frame, image, is_display_tracking=None, tracker=None, selected_classes=None, min_conf_export=0.0):
     """
     Display the detected objects on a video frame using the YOLOv8 model.
 
@@ -104,16 +108,18 @@ def _display_detected_frames(conf, model, st_frame, image, is_display_tracking=N
     result0 = res[0]
 
     # draw ONLY selected classes (BGR)
-    frame_drawn = draw_filtered_boxes(image, result0, selected_classes=selected_classes)
+    frame_drawn = draw_filtered_boxes(image, result0, selected_classes=selected_classes, min_conf_export=min_conf_export)
 
     st_frame.image(
         frame_drawn,
         caption="Detected Video",
         channels="BGR",
-        width='stretch'
+        use_container_width=True
     )
 
-def play_stored_video(conf, model):
+def play_stored_video(conf, model, selected_classes=None, enable_filter=True, min_conf_export=0.0):
+    if selected_classes is None:
+        selected_classes = []
     source_vid = st.sidebar.selectbox("Choose a video...", list(settings.VIDEOS_DICT.keys()))
     video_path = str(settings.VIDEOS_DICT.get(source_vid))
 
@@ -149,7 +155,11 @@ def play_stored_video(conf, model):
             res = model.predict(frame_bgr, conf=conf, verbose=False)
             result = res[0]
 
-            plotted_bgr = result.plot()  # BGR image with boxes/labels
+            # ✅ draw ONLY selected classes (and only if enable_filter is True)
+            classes_to_draw = selected_classes if enable_filter else None
+            plotted_bgr = draw_filtered_boxes(frame_bgr, result, selected_classes=classes_to_draw, min_conf_export=min_conf_export)
+
+            # (optional) for preview in Streamlit
             plotted_rgb = cv2.cvtColor(plotted_bgr, cv2.COLOR_BGR2RGB)
 
             # show live preview
