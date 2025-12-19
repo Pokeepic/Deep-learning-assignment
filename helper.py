@@ -127,8 +127,8 @@ def play_stored_video(conf, model, selected_classes=None, enable_filter=True, mi
 
     # Fixed GIF parameters (<= 10 seconds)
     GIF_FPS = 10
-    SAMPLE_EVERY = 6
-    MAX_GIF_FRAMES = 100
+    SAMPLE_EVERY = 3
+    MAX_GIF_FRAMES = 200
 
     if st.sidebar.button("Detect Video Objects"):
         cap = cv2.VideoCapture(video_path)
