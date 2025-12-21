@@ -63,18 +63,6 @@ Kaggle datasets. All rights and licenses remain with the original creators.
 
 ---
 
-4. **Video Project6**
-   - Platform: Kaggle
-   - Dataset Author: mahsa sanaei
-   - Dataset URL: https://www.kaggle.com/datasets/snmahsa/driving-test
-
-5. **Traffic Images of Vehicles**
-   - Platform: Kaggle
-   - Dataset Author: mdshahriyarhossain
-   - Dataset URL: https://www.kaggle.com/datasets/therealshihab/traffic-detection-for-yolov5
-
----
-
 ## License Compliance Notes## Kaggle Datasets
 
 1. **Video Project1 - Video Project3**
@@ -91,6 +79,17 @@ Kaggle datasets. All rights and licenses remain with the original creators.
    - Platform: Kaggle
    - Dataset Author: Abhay Swaroop
    - Dataset URL: https://www.kaggle.com/datasets/deeplyft/driving-video-subset-50-with-object-tracking
+
+4. **Video Project6**
+   - Platform: Kaggle
+   - Dataset Author: mahsa sanaei
+   - Dataset URL: https://www.kaggle.com/datasets/snmahsa/driving-test
+
+5. **Traffic Images of Vehicles**
+   - Platform: Kaggle
+   - Dataset Author: mdshahriyarhossain
+   - Dataset URL: https://www.kaggle.com/datasets/therealshihab/traffic-detection-for-yolov5
+---
 
 
 - Assets are used strictly under the terms specified on each Kaggle dataset page.
