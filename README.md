@@ -53,4 +53,4 @@ The goal of this project is to demonstrate practical usage of deep learning–ba
 
 ### Install dependencies
 ```bash
-pip install ultralytics streamlit opencv-python numpy pandas yt_dlp
+pip install ultralytics streamlit opencv-python numpy pandas yt_dlp imageio
