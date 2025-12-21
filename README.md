@@ -63,7 +63,7 @@ Kaggle datasets. All rights and licenses remain with the original creators.
 
 ---
 
-## License Compliance Notes## Kaggle Datasets
+## License Compliance Notes: Kaggle Datasets
 
 1. **Video Project1 - Video Project3**
    - Platform: Kaggle
